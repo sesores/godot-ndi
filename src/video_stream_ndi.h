@@ -19,7 +19,6 @@
 using namespace godot;
 
 
-// comment
 
 class NDISource : public RefCounted
 {
