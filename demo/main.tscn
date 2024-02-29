@@ -1,0 +1,111 @@
+[gd_scene load_steps=9 format=3 uid="uid://gdfn8c4xdwe"]
+
+[ext_resource type="Script" path="res://main.gd" id="1_i5bfj"]
+[ext_resource type="Script" path="res://ui.gd" id="2_v7koq"]
+[ext_resource type="Shader" path="res://glass_ui.gdshader" id="3_8v3lh"]
+[ext_resource type="Texture2D" uid="uid://calbbvvkki8" path="res://icon.svg" id="3_iv2te"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2v3u"]
+cull_mode = 2
+shading_mode = 0
+albedo_texture = ExtResource("3_iv2te")
+
+[sub_resource type="QuadMesh" id="QuadMesh_xcfyb"]
+size = Vector2(1.6, 0.9)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qfnpj"]
+shader = ExtResource("3_8v3lh")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_72np8"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(1, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_i5bfj")
+
+[node name="VideoStreamNDI" type="VideoStreamNDI" parent="."]
+target_size = Vector2i(256, 256)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_h2v3u")
+mesh = SubResource("QuadMesh_xcfyb")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.08165e-12, 2.08165e-12, 1)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer"]
+custom_minimum_size = Vector2(400, 200)
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -214.0
+offset_right = 400.0
+grow_vertical = 0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer/MarginContainer" node_paths=PackedStringArray("ndi")]
+material = SubResource("ShaderMaterial_qfnpj")
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_72np8")
+script = ExtResource("2_v7koq")
+ndi = NodePath("../../../VideoStreamNDI")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/MarginContainer/PanelContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "NDI Receiver Demo"
+
+[node name="Label2" type="Label" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+text = "Rotate"
+
+[node name="EnableRotation" type="CheckButton" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Search" type="Button" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Search"
+
+[node name="Start" type="Button" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Start"
+
+[node name="Stop" type="Button" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Stop
+"
+
+[node name="ItemList" type="ItemList" parent="CanvasLayer/MarginContainer/PanelContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3

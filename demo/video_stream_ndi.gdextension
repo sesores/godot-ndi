@@ -1,0 +1,21 @@
+[configuration]
+
+entry_symbol = "video_stream_ndi_library_init"
+compatibility_minimum = "4.1"
+
+
+[libraries]
+
+macos.debug = "res://bin/ndi.macos.template_debug.framework"
+macos.release = "res://bin/ndi.macos.template_release.framework"
+
+
+[dependencies]
+
+macos.debug = {
+    "res://bin/libndi.dylib" : ""
+}
+
+macos.release = {
+    "res://bin/libndi.dylib" : ""
+}

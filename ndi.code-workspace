@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.tpl": "html",
+			"__threading_support": "cpp",
+			"ostream": "cpp",
+			"__locale": "cpp",
+			"__string": "cpp",
+			"string": "cpp",
+			"string_view": "cpp"
+		}
+	}
+}
