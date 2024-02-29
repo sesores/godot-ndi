@@ -46,15 +46,15 @@ class NDISource : public RefCounted
 
 
 
-class NDIFrame : public RefCounted
+class NDIVideoFrame : public RefCounted
 {
-	GDCLASS(NDIFrame, RefCounted);
+	GDCLASS(NDIVideoFrame, RefCounted);
 	
 	friend class VideoStreamNDI;
 
 	public:
 
-		NDIFrame();
+		NDIVideoFrame();
 
 		int64_t get_timestamp() const;
 		Ref<Image> get_image() const;
@@ -96,7 +96,7 @@ public:
 	Vector2i get_target_size() const;
 
 	void _search_completed();
-	void _frame_received(Ref<NDIFrame> _frame);
+	void _frame_received(Ref<NDIVideoFrame> _frame);
 
 
 protected:

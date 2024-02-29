@@ -23,7 +23,7 @@ void initialize_video_stream_ndi_module(ModuleInitializationLevel p_level) {
 
 	ClassDB::register_class<VideoStreamNDI>();
 	ClassDB::register_class<NDISource>();
-	ClassDB::register_class<NDIFrame>();
+	ClassDB::register_class<NDIVideoFrame>();
 }
 
 

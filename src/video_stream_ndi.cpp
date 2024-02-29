@@ -26,19 +26,19 @@ void NDISource::_bind_methods()
 
 
 // NDI FRAME
-NDIFrame::NDIFrame() {}
+NDIVideoFrame::NDIVideoFrame() {}
 
-int64_t NDIFrame::get_timestamp() const { return timestamp; }
-Ref<Image> NDIFrame::get_image() const { return image; }
-double NDIFrame::get_frame_rate() const { return frame_rate; }
-Vector2i NDIFrame::get_original_size() const { return original_size; }
+int64_t NDIVideoFrame::get_timestamp() const { return timestamp; }
+Ref<Image> NDIVideoFrame::get_image() const { return image; }
+double NDIVideoFrame::get_frame_rate() const { return frame_rate; }
+Vector2i NDIVideoFrame::get_original_size() const { return original_size; }
 	
-void NDIFrame::_bind_methods()
+void NDIVideoFrame::_bind_methods()
 {
-	ClassDB::bind_method(D_METHOD("get_timestamp"), &NDIFrame::get_timestamp);
-	ClassDB::bind_method(D_METHOD("get_image"), &NDIFrame::get_image);
-	ClassDB::bind_method(D_METHOD("get_frame_rate"), &NDIFrame::get_frame_rate);
-	ClassDB::bind_method(D_METHOD("get_original_size"), &NDIFrame::get_original_size);
+	ClassDB::bind_method(D_METHOD("get_timestamp"), &NDIVideoFrame::get_timestamp);
+	ClassDB::bind_method(D_METHOD("get_image"), &NDIVideoFrame::get_image);
+	ClassDB::bind_method(D_METHOD("get_frame_rate"), &NDIVideoFrame::get_frame_rate);
+	ClassDB::bind_method(D_METHOD("get_original_size"), &NDIVideoFrame::get_original_size);
 }
 
 
@@ -263,7 +263,7 @@ void VideoStreamNDI::_receive_thread()
 				if (!has_valid_frame) continue;
 
 				// CREATE FRAME
-				Ref<NDIFrame> frame;
+				Ref<NDIVideoFrame> frame;
 				frame.instantiate();
 
 				frame->timestamp = video.timestamp;
@@ -324,7 +324,7 @@ void VideoStreamNDI::_receive_thread()
 
 
 
-void VideoStreamNDI::_frame_received(Ref<NDIFrame> _frame) 
+void VideoStreamNDI::_frame_received(Ref<NDIVideoFrame> _frame) 
 {
 	if (!_frame.is_valid() || _frame.is_null()) return;
 	
