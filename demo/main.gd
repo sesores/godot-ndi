@@ -26,7 +26,7 @@ func _process(_delta):
 
 
 
-func on_frame(_frame:NDIFrame):
+func on_frame(_frame:NDIVideoFrame):
 	#print("FRAME: ", _frame.get_frame_rate(), ", ", _frame.get_original_size(), ", ", _frame.get_image().get_size())
 	pass
 
