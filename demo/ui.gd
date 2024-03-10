@@ -2,7 +2,7 @@ extends PanelContainer
 
 
 
-@export var ndi:VideoStreamNDI = null;
+@export var ndi:NDIInput = null;
 
 @onready var search:BaseButton = %Search
 @onready var start:BaseButton = %Start

@@ -1,6 +1,6 @@
 [configuration]
 
-entry_symbol = "video_stream_ndi_library_init"
+entry_symbol = "ndi_input_library_init"
 compatibility_minimum = "4.1"
 
 

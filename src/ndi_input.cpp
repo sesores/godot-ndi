@@ -1,4 +1,4 @@
-#include "video_stream_ndi.h"
+#include "ndi_input.h"
 
 
 #include <godot_cpp/classes/image.hpp>
@@ -11,40 +11,7 @@
 
 
 
-// NDI SOURCE
-NDISource::NDISource() {}
-
-String NDISource::get_name() const { return name; }
-String NDISource::get_url() const { return url; }
-
-void NDISource::_bind_methods()
-{
-	ClassDB::bind_method(D_METHOD("get_name"), &NDISource::get_name);
-	ClassDB::bind_method(D_METHOD("get_url"), &NDISource::get_url);
-}
-
-
-
-// NDI FRAME
-NDIVideoFrame::NDIVideoFrame() {}
-
-int64_t NDIVideoFrame::get_timestamp() const { return timestamp; }
-Ref<Image> NDIVideoFrame::get_image() const { return image; }
-double NDIVideoFrame::get_frame_rate() const { return frame_rate; }
-Vector2i NDIVideoFrame::get_original_size() const { return original_size; }
-	
-void NDIVideoFrame::_bind_methods()
-{
-	ClassDB::bind_method(D_METHOD("get_timestamp"), &NDIVideoFrame::get_timestamp);
-	ClassDB::bind_method(D_METHOD("get_image"), &NDIVideoFrame::get_image);
-	ClassDB::bind_method(D_METHOD("get_frame_rate"), &NDIVideoFrame::get_frame_rate);
-	ClassDB::bind_method(D_METHOD("get_original_size"), &NDIVideoFrame::get_original_size);
-}
-
-
-
-
-VideoStreamNDI::VideoStreamNDI()
+NDIInput::NDIInput()
 {
 	search_thread.instantiate();
 	receive_thread.instantiate();
@@ -52,7 +19,7 @@ VideoStreamNDI::VideoStreamNDI()
 	set_create_texture(true);
 }
 
-VideoStreamNDI::~VideoStreamNDI()
+NDIInput::~NDIInput()
 {
 	if (search_thread->is_started()) 
 		search_thread->wait_to_finish();
@@ -65,31 +32,33 @@ VideoStreamNDI::~VideoStreamNDI()
 
 
 
-void VideoStreamNDI::set_create_texture(bool _create) 
+void NDIInput::set_create_texture(bool _create) 
 {
 	if (create_texture == _create) return;
 
 	create_texture = _create;
 
-	if (create_texture)
+	if (create_texture && (!texture.is_valid() || texture.is_null()))
 		texture.instantiate();
+	else if (!create_texture && (texture.is_valid() || !texture.is_null()))
+		texture.unref();
 	
 	emit_signal("create_texture_changed", create_texture);
 }
 
-bool VideoStreamNDI::get_create_texture() const 
+bool NDIInput::get_create_texture() const 
 {
 	return create_texture;
 }
 
-Ref<Texture2D> VideoStreamNDI::get_texture() const
+Ref<Texture2D> NDIInput::get_texture() const
 {
 	return texture;
 }
 
 
 
-void VideoStreamNDI::set_target_size (const Vector2i& _size)
+void NDIInput::set_target_size (const Vector2i& _size)
 {
 	if (target_size == _size) return;
 
@@ -98,24 +67,24 @@ void VideoStreamNDI::set_target_size (const Vector2i& _size)
 	receive_mutex.unlock();
 }
 
-Vector2i VideoStreamNDI::get_target_size() const
+Vector2i NDIInput::get_target_size() const
 {
 	return target_size;
 }
 
 
 
-void VideoStreamNDI::search()
+void NDIInput::search()
 {
 	if (is_search_running.is_set())
 		return;
 	
-	search_thread->start(callable_mp(this, &VideoStreamNDI::_search_thread));
+	search_thread->start(callable_mp(this, &NDIInput::_search_thread));
 }
 
 
 
-TypedArray<NDISource> VideoStreamNDI::_search_thread()
+TypedArray<NDISource> NDIInput::_search_thread()
 {
 	is_search_running.set();
 
@@ -169,7 +138,7 @@ TypedArray<NDISource> VideoStreamNDI::_search_thread()
 
 
 
-void VideoStreamNDI::_search_completed()
+void NDIInput::_search_completed()
 {
 	TypedArray<NDISource> results = search_thread->wait_to_finish();
 
@@ -178,7 +147,7 @@ void VideoStreamNDI::_search_completed()
 
 
 
-void VideoStreamNDI::start_receiving(Ref<NDISource> _source) {
+void NDIInput::start_receiving(Ref<NDISource> _source) {
 	UtilityFunctions::print("STARTED: ", receive_thread->is_started());
 
 	if (!_source.is_valid() || _source.is_null() || current_source == _source) 
@@ -191,13 +160,13 @@ void VideoStreamNDI::start_receiving(Ref<NDISource> _source) {
 
 	current_source = _source;
 	receive_should_exit.clear();
-	receive_thread->start(callable_mp(this, &VideoStreamNDI::_receive_thread));
+	receive_thread->start(callable_mp(this, &NDIInput::_receive_thread));
 	UtilityFunctions::print("STARTED: ", receive_thread->is_started());
 }
 
 
 
-void VideoStreamNDI::_receive_thread()
+void NDIInput::_receive_thread()
 {
 	if (!current_source.is_valid() || current_source.is_null()) return;
 
@@ -232,12 +201,14 @@ void VideoStreamNDI::_receive_thread()
 
 	is_receive_running.set();
 
-	call_deferred("emit_signal", "receiving_started");
+	call_deferred("emit_signal", "started");
 
 
 	// MAIN LOOP
 	while (!receive_should_exit.is_set())
 	{
+		has_valid_frame = false;
+
 		receive_mutex.lock();
 		Vector2i target = target_size;
 		receive_mutex.unlock();
@@ -255,9 +226,7 @@ void VideoStreamNDI::_receive_thread()
 						break;
 					
 					default:
-						has_valid_frame = false;
-						UtilityFunctions::push_warning("Unsupported video color format: ", video.FourCC);
-						continue;
+						UtilityFunctions::push_warning("Unsupported NDI video color format: ", video.FourCC);
 				}
 
 				if (!has_valid_frame) continue;
@@ -266,7 +235,11 @@ void VideoStreamNDI::_receive_thread()
 				Ref<NDIVideoFrame> frame;
 				frame.instantiate();
 
+				frame->timecode = video.timecode;
 				frame->timestamp = video.timestamp;
+
+				frame->metadata = String(video.p_metadata);
+
 				frame->frame_rate = (double) video.frame_rate_N / (double) video.frame_rate_N;
 				frame->original_size = Vector2i(video.xres, video.yres);
 
@@ -284,34 +257,66 @@ void VideoStreamNDI::_receive_thread()
 					frame->image->resize(target.x, target.y, Image::Interpolation::INTERPOLATE_BILINEAR);
 				}
 
-				call_deferred("_frame_received", frame);
-
+				call_deferred("_video_frame_received", frame);
+				
 				NDIlib_recv_free_video_v2(receiver, &video); 
 			} break;
 				
+
 			case NDIlib_frame_type_audio:
+			{
+				Ref<NDIAudioFrame> frame;
+				frame.instantiate();
+
+				frame->timecode = audio.timecode;
+				frame->timestamp = audio.timestamp;
+
+				frame->metadata = String(audio.p_metadata);
+
+				frame->channel_count = audio.no_channels;
+				frame->sample_count = audio.no_samples;
+				frame->sample_rate = audio.sample_rate;
+				
+				// COPY SAMPLES
+				int64_t length = audio.no_samples * audio.no_channels;
+
+				PackedByteArray buffer;
+				buffer.resize(length);
+				memcpy(buffer.ptrw(), audio.p_data, length);
+
+				frame->samples = buffer.to_float32_array();
+				
+				call_deferred("_audio_frame_received", frame);
+
 				NDIlib_recv_free_audio_v3(receiver, &audio);
-				break;
+			} break;
 			
+
 			case NDIlib_frame_type_metadata:
-				UtilityFunctions::print("Meta: ", metadata.length);
+			{
+				Ref<NDIMetaFrame> frame;
+				frame.instantiate();
+
+				frame->timecode = metadata.timecode;
+				frame->metadata = String(metadata.p_data);
+				
+				call_deferred("_meta_frame_received", frame);
+
 				NDIlib_recv_free_metadata(receiver, &metadata); 
-				break;
+			} break;
 			
-			case NDIlib_frame_type_none:
+
+			/*case NDIlib_frame_type_none:
 				UtilityFunctions::print("No data...");
 				break;
 			
 			case NDIlib_frame_type_status_change:
 				UtilityFunctions::print("Status change: ");
-				break;
+				break;*/
 			
 			case NDIlib_frame_type_error:
-				UtilityFunctions::print("Error: ");
+				UtilityFunctions::push_error("Error occured during receiving NDI frame from source: ", current_source->get_name());
 				break;
-			
-			default:
-				continue;
 		}
 	}
 
@@ -324,20 +329,46 @@ void VideoStreamNDI::_receive_thread()
 
 
 
-void VideoStreamNDI::_frame_received(Ref<NDIVideoFrame> _frame) 
+void NDIInput::_video_frame_received(Ref<NDIVideoFrame> _frame) 
 {
 	if (!_frame.is_valid() || _frame.is_null()) return;
+	if (!_frame->get_image().is_valid() || _frame->get_image().is_null()) return;
 	
-	if (create_texture && _frame->get_image().is_valid()) {
-		texture->set_image(_frame->get_image());
+	if (create_texture) {
+		if (Vector2i(texture->get_size()) == _frame->get_image()->get_size())
+		{
+			texture->update(_frame->get_image());
+		}
+		else 
+		{
+			texture->set_image(_frame->get_image());
+		}
 	}
 
-	emit_signal("frame_received", _frame);
+	emit_signal("video_frame_received", _frame);
 }
 
 
 
-void VideoStreamNDI::stop_receiving() {
+void NDIInput::_audio_frame_received(Ref<NDIAudioFrame> _frame) 
+{
+	if (!_frame.is_valid() || _frame.is_null()) return;
+	
+	emit_signal("audio_frame_received", _frame);
+}
+
+
+
+void NDIInput::_meta_frame_received(Ref<NDIMetaFrame> _frame) 
+{
+	if (!_frame.is_valid() || _frame.is_null()) return;
+	
+	emit_signal("meta_frame_received", _frame);
+}
+
+
+
+void NDIInput::stop_receiving() {
 	UtilityFunctions::print("STARTED: ", receive_thread->is_started());
 
 	if (!is_receive_running.is_set()) return;
@@ -349,34 +380,42 @@ void VideoStreamNDI::stop_receiving() {
 
 	current_source = Ref<NDISource>();
 
-	emit_signal("receiving_stopped");
+	emit_signal("stopped");
 }
 
 
 
-void VideoStreamNDI::_bind_methods()
+void NDIInput::_bind_methods()
 {
 	// METHODS
-	ClassDB::bind_method(D_METHOD("search"), &VideoStreamNDI::search);
-	ClassDB::bind_method(D_METHOD("start_receiving", "source"), &VideoStreamNDI::start_receiving);
-	ClassDB::bind_method(D_METHOD("stop_receiving"), &VideoStreamNDI::stop_receiving);
+	ClassDB::bind_method(D_METHOD("search"), &NDIInput::search);
+	ClassDB::bind_method(D_METHOD("start_receiving", "_source"), &NDIInput::start_receiving);
+	ClassDB::bind_method(D_METHOD("stop_receiving"), &NDIInput::stop_receiving);
 	
-	ClassDB::bind_method(D_METHOD("set_target_size"), &VideoStreamNDI::set_target_size);
-	ClassDB::bind_method(D_METHOD("get_target_size"), &VideoStreamNDI::get_target_size);
+	ClassDB::bind_method(D_METHOD("set_target_size"), &NDIInput::set_target_size);
+	ClassDB::bind_method(D_METHOD("get_target_size"), &NDIInput::get_target_size);
 	
-	ClassDB::bind_method(D_METHOD("get_create_texture"), &VideoStreamNDI::get_create_texture);
-	ClassDB::bind_method(D_METHOD("set_create_texture"), &VideoStreamNDI::set_create_texture);
-	ClassDB::bind_method(D_METHOD("get_texture"), &VideoStreamNDI::get_texture);
+	ClassDB::bind_method(D_METHOD("get_create_texture"), &NDIInput::get_create_texture);
+	ClassDB::bind_method(D_METHOD("set_create_texture"), &NDIInput::set_create_texture);
+	ClassDB::bind_method(D_METHOD("get_texture"), &NDIInput::get_texture);
 	
-	ClassDB::bind_method(D_METHOD("_search_completed"), &VideoStreamNDI::_search_completed);
-	ClassDB::bind_method(D_METHOD("_frame_received"), &VideoStreamNDI::_frame_received);
+	ClassDB::bind_method(D_METHOD("_search_completed"), &NDIInput::_search_completed);
+	
+	ClassDB::bind_method(D_METHOD("_video_frame_received"), &NDIInput::_video_frame_received);
+	ClassDB::bind_method(D_METHOD("_audio_frame_received"), &NDIInput::_audio_frame_received);
+	ClassDB::bind_method(D_METHOD("_meta_frame_received"), &NDIInput::_meta_frame_received);
 
 	// SIGNALS
 	ADD_SIGNAL(MethodInfo("search_completed", PropertyInfo(Variant::ARRAY, "result")));
-	ADD_SIGNAL(MethodInfo("receiving_started"));
-	ADD_SIGNAL(MethodInfo("receiving_stopped"));
+
+	ADD_SIGNAL(MethodInfo("started"));
+	ADD_SIGNAL(MethodInfo("stopped"));
+
 	ADD_SIGNAL(MethodInfo("create_texture_changed", PropertyInfo(Variant::BOOL, "creates")));
-	ADD_SIGNAL(MethodInfo("frame_received", PropertyInfo(Variant::OBJECT, "frame")));
+
+	ADD_SIGNAL(MethodInfo("video_frame_received", PropertyInfo(Variant::OBJECT, "_frame")));
+	ADD_SIGNAL(MethodInfo("audio_frame_received", PropertyInfo(Variant::OBJECT, "_frame")));
+	ADD_SIGNAL(MethodInfo("meta_frame_received", PropertyInfo(Variant::OBJECT, "_frame")));
 
 	// PROPERTIES
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I, "target_size", PROPERTY_HINT_NONE, "suffix:px"), "set_target_size", "get_target_size");

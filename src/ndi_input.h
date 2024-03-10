@@ -1,5 +1,5 @@
-#ifndef VIDEO_STREAM_NDI_H
-#define VIDEO_STREAM_NDI_H
+#ifndef NDI_INPUT_H
+#define NDI_INPUT_H
 
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/classes/node.hpp>
@@ -14,75 +14,24 @@
 
 #include <Processing.NDI.Lib.h>
 
+#include "ndi_source.h"
+#include "ndi_frames.h"
+
 
 
 using namespace godot;
 
 
 
-class NDISource : public RefCounted
+
+class NDIInput : public Node 
 {
-	GDCLASS(NDISource, RefCounted);
-
-	friend class VideoStreamNDI;
-
-	public:
-		NDISource();
-
-		NDIlib_source_t get_handle() const;
-		String get_name() const;
-		String get_url() const;
-	
-
-	protected:
-		static void _bind_methods();
-	
-
-	private:
-		NDIlib_source_t handle;
-		String name;
-		String url;
-};
-
-
-
-class NDIVideoFrame : public RefCounted
-{
-	GDCLASS(NDIVideoFrame, RefCounted);
-	
-	friend class VideoStreamNDI;
-
-	public:
-
-		NDIVideoFrame();
-
-		int64_t get_timestamp() const;
-		Ref<Image> get_image() const;
-		double get_frame_rate() const;
-		Vector2i get_original_size() const;
-	
-
-	protected:
-		static void _bind_methods();
-	
-
-	private:
-		int64_t timestamp;
-		Ref<Image> image;
-		double frame_rate;
-		Vector2i original_size;
-};
-
-
-
-class VideoStreamNDI : public Node 
-{
-	GDCLASS(VideoStreamNDI, Node);
+	GDCLASS(NDIInput, Node);
 	
 public:
 
-	VideoStreamNDI();
-	~VideoStreamNDI();
+	NDIInput();
+	~NDIInput();
 
 	void search();
 	void start_receiving(Ref<NDISource> _source);
@@ -96,7 +45,10 @@ public:
 	Vector2i get_target_size() const;
 
 	void _search_completed();
-	void _frame_received(Ref<NDIVideoFrame> _frame);
+
+	void _video_frame_received(Ref<NDIVideoFrame> _frame);
+	void _audio_frame_received(Ref<NDIAudioFrame> _frame);
+	void _meta_frame_received(Ref<NDIMetaFrame> _frame);
 
 
 protected:
@@ -126,4 +78,4 @@ private:
 
 
 
-#endif // VIDEO_STREAM_NDI_H
+#endif // NDI_INPUT_H
