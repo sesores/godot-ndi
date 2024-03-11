@@ -3,6 +3,7 @@
 
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/os.hpp>
 
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/variant/string_name.hpp>
@@ -170,7 +171,6 @@ void NDIInput::_receive_thread()
 {
 	if (!current_source.is_valid() || current_source.is_null()) return;
 
-
 	// CREATE RECEIVER
 	NDIlib_recv_create_v3_t settings;
 	settings.source_to_connect_to = current_source->handle;
@@ -186,7 +186,6 @@ void NDIInput::_receive_thread()
 		UtilityFunctions::push_error("Could not create NDI Receiver!");
 		return;
 	}
-	
 
 	// CONNECT TO SOURCE
 	NDIlib_source_t handle = current_source->handle;
@@ -214,7 +213,7 @@ void NDIInput::_receive_thread()
 		receive_mutex.unlock();
 
 		NDIlib_frame_type_e frame_type = NDIlib_recv_capture_v3(receiver, &video, &audio, &metadata, 1000);
-
+		
 		switch (frame_type) 
 		{
 			case NDIlib_frame_type_video:
@@ -244,7 +243,7 @@ void NDIInput::_receive_thread()
 				frame->original_size = Vector2i(video.xres, video.yres);
 
 				// CREATE IMAGE
-				int64_t length = video.data_size_in_bytes * video.yres;
+				size_t length = (size_t) video.line_stride_in_bytes * (size_t) video.yres;
 
 				PackedByteArray buffer;
 				buffer.resize(length);
@@ -278,7 +277,7 @@ void NDIInput::_receive_thread()
 				frame->sample_rate = audio.sample_rate;
 				
 				// COPY SAMPLES
-				int64_t length = audio.no_samples * audio.no_channels;
+				int64_t length = audio.channel_stride_in_bytes * audio.no_channels;
 
 				PackedByteArray buffer;
 				buffer.resize(length);
@@ -306,13 +305,13 @@ void NDIInput::_receive_thread()
 			} break;
 			
 
-			/*case NDIlib_frame_type_none:
-				UtilityFunctions::print("No data...");
-				break;
+			//case NDIlib_frame_type_none:
+			//	UtilityFunctions::print("No data...");
+			//	break;
 			
-			case NDIlib_frame_type_status_change:
-				UtilityFunctions::print("Status change: ");
-				break;*/
+			//case NDIlib_frame_type_status_change:
+			//	UtilityFunctions::print("Status change: ");
+			//	break;
 			
 			case NDIlib_frame_type_error:
 				UtilityFunctions::push_error("Error occured during receiving NDI frame from source: ", current_source->get_name());

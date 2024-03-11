@@ -10,7 +10,6 @@ extends Node3D
 
 var material:StandardMaterial3D
 
-var samples := PackedFloat32Array()
 var audio_playback:AudioStreamGeneratorPlayback = null
 var sample_hz:float = 440.0
 var pulse_hz:float = 440.0
@@ -23,7 +22,7 @@ func _ready():
 	
 	audio_player.play()
 	audio_playback = audio_player.get_stream_playback()
-	fill_audio_buffer()
+	#fill_audio_buffer()
 	
 	material = mesh.get_active_material(0) as StandardMaterial3D
 	material.albedo_texture = ndi.get_texture()
