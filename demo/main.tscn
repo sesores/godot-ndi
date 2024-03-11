@@ -1,9 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://gdfn8c4xdwe"]
+[gd_scene load_steps=10 format=3 uid="uid://gdfn8c4xdwe"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_i5bfj"]
 [ext_resource type="Script" path="res://ui.gd" id="2_v7koq"]
 [ext_resource type="Shader" path="res://glass_ui.gdshader" id="3_8v3lh"]
 [ext_resource type="Texture2D" uid="uid://calbbvvkki8" path="res://icon.svg" id="3_iv2te"]
+
+[sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_r07bn"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2v3u"]
 cull_mode = 2
@@ -31,6 +33,9 @@ corner_radius_bottom_left = 10
 script = ExtResource("1_i5bfj")
 
 [node name="NDIInput" type="NDIInput" parent="."]
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = SubResource("AudioStreamGenerator_r07bn")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 material_override = SubResource("StandardMaterial3D_h2v3u")
