@@ -32,7 +32,8 @@ if env["platform"] == "macos":
         return out.rstrip("\r\n").lstrip()
 
     def change_id(self, arg, env, executor = None):
-        sys_exec(["install_name_tool", "-change", "@rpath/libndi.dylib", "bin/libndi.dylib", target])
+        sys_exec(["install_name_tool", "-id", "@rpath/libndi.dylib", target])
+        sys_exec(["install_name_tool", "-change", "@rpath/libndi.dylib", "@loader_path/../libndi.dylib", target])
     
     change_id_action = Action('', change_id)
 
