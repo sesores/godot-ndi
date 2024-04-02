@@ -2,7 +2,8 @@ extends Node3D
 
 
 
-@onready var ndi:NDIInput = $NDIInput
+@export var ndi:NDIInput = null
+
 @onready var audio_player:AudioStreamPlayer = $AudioStreamPlayer
 @onready var mesh:MeshInstance3D = $MeshInstance3D
 

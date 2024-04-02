@@ -2,7 +2,6 @@
 #define NDI_INPUT_H
 
 #include <godot_cpp/classes/ref_counted.hpp>
-#include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/thread.hpp>
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/image.hpp>
@@ -24,9 +23,9 @@ using namespace godot;
 
 
 
-class NDIInput : public Node 
+class NDIInput : public Resource 
 {
-	GDCLASS(NDIInput, Node);
+	GDCLASS(NDIInput, Resource);
 	
 public:
 
@@ -36,6 +35,7 @@ public:
 	void search();
 	void start_receiving(Ref<NDISource> _source);
 	void stop_receiving();
+	bool is_receiving();
 
 	void set_create_texture(bool _create);
 	bool get_create_texture() const;

@@ -208,10 +208,6 @@ void NDIInput::_receive_thread()
 	{
 		has_valid_frame = false;
 
-		receive_mutex.lock();
-		Vector2i target = target_size;
-		receive_mutex.unlock();
-
 		NDIlib_frame_type_e frame_type = NDIlib_recv_capture_v3(receiver, &video, &audio, &metadata, 1000);
 		
 		switch (frame_type) 
@@ -241,6 +237,14 @@ void NDIInput::_receive_thread()
 
 				frame->frame_rate = (double) video.frame_rate_N / (double) video.frame_rate_N;
 				frame->original_size = Vector2i(video.xres, video.yres);
+				frame->original_aspect = (double) video.xres / (double) video.yres;
+
+				// SIZE
+				Vector2i current_size = Vector2i(video.xres, video.yres);
+
+				receive_mutex.lock();
+				Vector2i target = target_size;
+				receive_mutex.unlock();
 
 				// CREATE IMAGE
 				size_t length = (size_t) video.line_stride_in_bytes * (size_t) video.yres;
@@ -249,11 +253,34 @@ void NDIInput::_receive_thread()
 				buffer.resize(length);
 				memcpy(buffer.ptrw(), video.p_data, length);
 
-				frame->image = Image::create_from_data(video.xres, video.yres, false, Image::FORMAT_RGBA8, buffer);
-
-				if (target.x > 0 && target.y > 0) 
+				// RESIZE
+				if (target.x > 0 && target.y > 0 && current_size != target)
 				{
-					frame->image->resize(target.x, target.y, Image::Interpolation::INTERPOLATE_BILINEAR);
+					Vector2i offset = Vector2i();
+					Vector2i resized = target;
+
+					if (current_size.x > current_size.y)
+					{
+						resized.y = int(round(((float) target.x / (float) current_size.x) * (float) current_size.y));
+						offset.y = round((target.y - resized.y) / 2.0);
+					} 
+					else if (current_size.y > current_size.x)
+					{
+						resized.x = int(round(((float) target.y / (float) current_size.y) * (float) current_size.x));
+						offset.x = round((target.x - resized.x) / 2.0);
+					}
+
+					Ref<Image> image = Image::create_from_data(video.xres, video.yres, false, Image::FORMAT_RGBA8, buffer);
+					image->resize(resized.x, resized.y, Image::INTERPOLATE_BILINEAR);
+
+					Ref<Image> centered = Image::create(target.x, target.y, false, Image::FORMAT_RGBA8);
+					centered->blit_rect(image, Rect2i(0, 0, resized.x, resized.y), offset);
+
+					frame->image = centered;
+				} 
+				else
+				{
+					frame->image = Image::create_from_data(video.xres, video.yres, false, Image::FORMAT_RGBA8, buffer);
 				}
 
 				call_deferred("_video_frame_received", frame);
@@ -384,12 +411,19 @@ void NDIInput::stop_receiving() {
 
 
 
+bool NDIInput::is_receiving() {
+	return is_receive_running.is_set();
+}
+
+
+
 void NDIInput::_bind_methods()
 {
 	// METHODS
 	ClassDB::bind_method(D_METHOD("search"), &NDIInput::search);
 	ClassDB::bind_method(D_METHOD("start_receiving", "_source"), &NDIInput::start_receiving);
 	ClassDB::bind_method(D_METHOD("stop_receiving"), &NDIInput::stop_receiving);
+	ClassDB::bind_method(D_METHOD("is_receiving"), &NDIInput::is_receiving);
 	
 	ClassDB::bind_method(D_METHOD("set_target_size"), &NDIInput::set_target_size);
 	ClassDB::bind_method(D_METHOD("get_target_size"), &NDIInput::get_target_size);

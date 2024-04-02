@@ -40,6 +40,11 @@ Vector2i NDIVideoFrame::get_original_size() const
 {
 	return original_size; 
 }
+
+double NDIVideoFrame::get_original_aspect() const 
+{
+	return original_aspect; 
+}
 	
 void NDIVideoFrame::_bind_methods()
 {
@@ -47,6 +52,7 @@ void NDIVideoFrame::_bind_methods()
 	ClassDB::bind_method(D_METHOD("get_image"), &NDIVideoFrame::get_image);
 	ClassDB::bind_method(D_METHOD("get_frame_rate"), &NDIVideoFrame::get_frame_rate);
 	ClassDB::bind_method(D_METHOD("get_original_size"), &NDIVideoFrame::get_original_size);
+	ClassDB::bind_method(D_METHOD("get_original_aspect"), &NDIVideoFrame::get_original_aspect);
 }
 
 

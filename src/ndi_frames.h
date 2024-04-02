@@ -52,6 +52,7 @@ class NDIVideoFrame : public NDIFrame
 		Ref<Image> get_image() const;
 		double get_frame_rate() const;
 		Vector2i get_original_size() const;
+		double get_original_aspect() const;
 	
 
 	protected:
@@ -63,6 +64,7 @@ class NDIVideoFrame : public NDIFrame
 		Ref<Image> image;
 		double frame_rate;
 		Vector2i original_size;
+		double original_aspect;
 };
 
 
