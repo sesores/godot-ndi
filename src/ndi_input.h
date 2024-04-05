@@ -22,7 +22,6 @@ using namespace godot;
 
 
 
-
 class NDIInput : public Resource 
 {
 	GDCLASS(NDIInput, Resource);

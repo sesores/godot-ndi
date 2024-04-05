@@ -439,7 +439,7 @@ void NDIInput::_bind_methods()
 	ClassDB::bind_method(D_METHOD("_meta_frame_received"), &NDIInput::_meta_frame_received);
 
 	// SIGNALS
-	ADD_SIGNAL(MethodInfo("search_completed", PropertyInfo(Variant::ARRAY, "result")));
+	ADD_SIGNAL(MethodInfo("search_completed", PropertyInfo(Variant::ARRAY, "result", PROPERTY_HINT_ARRAY_TYPE, "NDISource")));
 
 	ADD_SIGNAL(MethodInfo("started"));
 	ADD_SIGNAL(MethodInfo("stopped"));
@@ -452,7 +452,7 @@ void NDIInput::_bind_methods()
 
 	// PROPERTIES
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I, "target_size", PROPERTY_HINT_NONE, "suffix:px"), "set_target_size", "get_target_size");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "create_texture", PROPERTY_HINT_NONE, ""), "set_create_texture", "get_create_texture");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "create_texture", PROPERTY_HINT_NONE), "set_create_texture", "get_create_texture");
 }
 
 
